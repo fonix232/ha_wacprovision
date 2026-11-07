@@ -15,7 +15,7 @@ def sighting(radio: str, rssi: int, age: timedelta = timedelta()) -> Sighting:
     return Sighting("00:11:22:33:44:55", radio, "00:11:22:33:44:56", 6, rssi, "Plug", "Acme", "P1", NOW - age)
 
 
-def test_ranked_best_rssi_first_and_drops_stale():
+async def test_ranked_best_rssi_first_and_drops_stale():
     reg = SightingRegistry(lambda: NOW)
     assert reg.add(sighting("esphome:a", -70)) is True
     assert reg.add(sighting("esphome:b", -50)) is False
@@ -24,14 +24,14 @@ def test_ranked_best_rssi_first_and_drops_stale():
     assert [s.radio_id for s in reg.ranked("00:11:22:33:44:55", exclude={"esphome:b"})] == ["esphome:a"]
 
 
-def test_only_pre_config_failures_retry_elsewhere():
+async def test_only_pre_config_failures_retry_elsewhere():
     for stage in (ProvisionStage.JOIN, ProvisionStage.DISCOVER, ProvisionStage.AUTH_SETUP):
         assert ProvisionResult(False, stage).retryable_elsewhere
     assert not ProvisionResult(False, ProvisionStage.CONFIG_SENT).retryable_elsewhere
     assert not ProvisionResult(True, ProvisionStage.DONE).retryable_elsewhere
 
 
-def test_esphome_result_strings():
+async def test_esphome_result_strings():
     assert _parse_result({"ok": "false", "stage": "join"}).ok is False
     assert _parse_result({"ok": "true", "stage": "done"}).ok is True
     assert _parse_result({"ok": "false", "stage": "garbage"}).stage is ProvisionStage.CONFIG_SENT

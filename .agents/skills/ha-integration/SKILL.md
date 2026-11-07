@@ -26,6 +26,7 @@ description: "The wac_provision Home Assistant custom integration: discovery car
 - Use HA's shared zeroconf instance (`zeroconf.async_get_async_instance`) to find
   `_mfi-config._tcp` after the accessory joins; do not open a second responder on the LAN.
 - The host backend must not use the interface carrying HA's default route unless the user
-  opted in (v1: refuse).
+  opted in (v1: refuse). `HostRadio` (logic, tested with a fake `WifiControl`) exists; the
+  NetworkManager/wpa_supplicant `WifiControl` does not, so no host radio is registered.
 - `homekit_controller` internals (step names, `pairing_code`) are only touched from
   `homekit_controller_bridge.py`, which does not exist until v2.
