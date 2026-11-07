@@ -19,8 +19,9 @@ files. Check, in this order, and report only real findings with file and line:
 3. **Protocol correctness**: a new CTR stream per message, wrong order of stream use,
    missing TLV fragmentation on encode or merge on decode, unbounded reads of HTTP bodies,
    trailing data accepted after the auth-setup signature.
-4. **ESPHome recovery**: a provisioning path not covered by the deadline timer, the boot
-   marker or `reboot_timeout`; blocking calls without timeouts.
+4. **ESPHome recovery**: a provisioning path not covered by the deadline timer, the backstop
+   restart timer or the boot marker; the backstop stopped before `wifi.enable()`; blocking
+   calls without timeouts, or blocking calls on the main loop instead of the session task.
 5. **HA scope**: v1 creating config entries, devices or entities per accessory;
    `homekit_controller` internals referenced outside `homekit_controller_bridge.py`;
    `single_config_entry` in the manifest (it aborts discovery flows).

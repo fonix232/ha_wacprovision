@@ -7,10 +7,11 @@ request. See README for the YAML that wires the events and the API action.
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome import automation
+from esphome.components import logger, wifi
 from esphome.const import CONF_ID, CONF_TRIGGER_ID
 
 CODEOWNERS = ["@fonix232"]
-DEPENDENCIES = ["wifi", "api"]
+DEPENDENCIES = ["wifi", "api", "logger"]
 
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_DEADLINE = "deadline"
@@ -50,6 +51,11 @@ CONFIG_SCHEMA = cv.All(
 async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
+    # SSID and channel of WAC soft-APs come from the wifi component's scan results, so it
+    # must keep all of them (not just configured networks) and tell us after each scan.
+    wifi.request_wifi_scan_results()
+    wifi.request_wifi_scan_results_listener()
+    logger.request_log_listener()
     cg.add(var.set_scan_interval(config[CONF_SCAN_INTERVAL]))
     cg.add(var.set_deadline(config[CONF_DEADLINE]))
     cg.add(var.set_log_cache_size(config[CONF_LOG_CACHE_SIZE]))
