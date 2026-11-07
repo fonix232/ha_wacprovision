@@ -15,8 +15,10 @@ python/aiowac/                 WAC configurator library + CLI (PyPI package `aio
 python/aiowac/src/aiowac/      library source: tlv, beacon, crypto, session, transport, cli
 python/aiowac/tests/           pytest, including a fake accessory server
 custom_components/wac_provision/  HA custom integration (HACS), domain `wac_provision`
-components/wac_provisioner/    ESPHome external component (ESP-IDF only)
-docs/                          design notes
+custom_components/wac_provision/backends/  radios: esphome.py (ESPHome nodes), host.py (stub)
+components/wac_provisioner/    ESPHome external component (ESP32 only; uses IDF APIs)
+tests/ha/                      HA-side unit tests (no running HA needed)
+tests/esphome/                 ESPHome config/codegen test YAML
 hacs.json                      HACS manifest
 .claude/agents/                Claude Code agents
 .agents/                       shared skills, plans; local/ is ignored
@@ -51,8 +53,9 @@ hacs.json                      HACS manifest
   hand it a transport. Both the HA host backend and the CLI use it.
 - The ESPHome component owns the full WAC exchange on the ESP, because the ESP loses its HA
   connection while joined to the soft-AP; HA cannot proxy the exchange through it.
-- Accessory-side device authentication (MFi certificate check) is not implemented yet; the
-  client runs as `verify=False`. Keep the certificate bytes so verification can be added.
+- Accessory-side device authentication (MFi certificate and signature check) is not
+  implemented yet. `AuthSetup` keeps the certificate and decrypted signature so it can be
+  added without changing callers.
 - After the accessory joins the target network, the configurator POSTs `/configured` to its
   `_mfi-config._tcp` service on that network. In HA this is done by the integration (via
   HA's shared zeroconf instance) for every backend.
@@ -63,8 +66,17 @@ hacs.json                      HACS manifest
 ```
 cd python/aiowac && python -m pip install -e '.[test,cli]' && python -m pytest -q
 python -m aiowac.cli decode-beacon <hex IE>
-python -m aiowac.cli provision --ssid TestSSID --psk testpassword   # while joined to the accessory's soft-AP
+python -m aiowac.cli provision --ssid TestSSID          # while joined to the accessory's soft-AP; prompts for the PSK
+
+# HA side, from the repo root, in a venv with `homeassistant`, `pytest` and `-e python/aiowac`:
+python -m pytest -q tests/ha
+
+# ESPHome side, in a venv with `esphome` (compiling needs the ESP-IDF toolchain):
+cd tests/esphome && esphome config test.esp32-idf.yaml && esphome compile --only-generate test.esp32-idf.yaml
 ```
+
+The flow and backends are only import-checked against HA so far; there are no
+pytest-homeassistant-custom-component flow tests yet. The C++ has not been compiled.
 
 Real-device verification: factory-reset a HomeKit Wi-Fi accessory, join its open soft-AP
 from a Linux machine (`nmcli dev wifi connect "<accessory SSID>"`), run `provision`, rejoin
@@ -74,8 +86,9 @@ the normal network and check that `_hap._tcp` shows the accessory with `sf=1`.
 
 - One commit per finished, verified task. **No Co-Authored-By or other AI attribution
   trailers.** Push only when asked.
-- Tests live next to the code they cover (`python/aiowac/tests/`). New protocol behaviour
-  needs a test against the fake accessory in `tests/fake_accessory.py`.
+- `aiowac` tests live in `python/aiowac/tests/`; new protocol behaviour needs a test against
+  the fake accessory in `python/aiowac/tests/fake_accessory.py`, which reimplements the
+  crypto on purpose so client bugs cannot cancel out. HA tests live in `tests/ha/`.
 - Notes, logs, captures and reviews go under `.agents/local/` (ignored).
 
 ## Skills, agents, plans

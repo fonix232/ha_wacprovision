@@ -5,7 +5,7 @@ description: "The wac_provisioner ESPHome external component: passive WAC beacon
 
 # ESPHome component (`components/wac_provisioner`)
 
-ESP-IDF only. One radio, one STA: the node drops its HA API connection for the ~20 s of a
+ESP32 only (uses IDF APIs: esp_wifi, esp_timer, mdns). One radio, one STA: the node drops its HA API connection for the ~20 s of a
 provisioning session. That is accepted; the guards make it safe.
 
 ## Interface

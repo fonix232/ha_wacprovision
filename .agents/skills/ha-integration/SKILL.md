@@ -7,7 +7,8 @@ description: "The wac_provision Home Assistant custom integration: discovery car
 
 ## Shape (v1)
 
-- One hub config entry (`single_config_entry`), holding the target network for radios that
+- One hub config entry (enforced in the user step, not with `single_config_entry`, which
+  would also abort our discovery flows), holding the target network for radios that
   do not have their own credentials (the host backend). ESPHome radios default to their own.
 - Radios report sightings into `registry.py`: `device_id -> {radio_id: (rssi, last_seen)}`.
 - A new device ID starts a flow with `SOURCE_INTEGRATION_DISCOVERY`, `unique_id` = WAC

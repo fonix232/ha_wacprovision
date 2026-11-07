@@ -1,0 +1,41 @@
+esphome:
+  name: wac-test
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf
+wifi:
+  ssid: TestSSID
+  password: testpassword
+logger:
+external_components:
+  - source:
+      type: local
+      path: ../../components
+    components: [wac_provisioner]
+wac_provisioner:
+  id: wac
+  on_found:
+    - homeassistant.event:
+        event: esphome.wac_found
+        data:
+          node: !lambda "return App.get_name();"
+          wac_id: !lambda "return acc.wac_id;"
+          rssi: !lambda "return to_string(acc.rssi);"
+  on_result:
+    - homeassistant.event:
+        event: esphome.wac_result
+        data:
+          ok: !lambda 'return res.ok ? "true" : "false";'
+          stage: !lambda "return esphome::wac_provisioner::stage_str(res.stage);"
+api:
+  actions:
+    - action: wac_provision
+      variables:
+        session: string
+        bssid: string
+        name: string
+        ssid: string
+        psk: string
+      then:
+        - lambda: "id(wac).provision(session, bssid, name, ssid, psk);"

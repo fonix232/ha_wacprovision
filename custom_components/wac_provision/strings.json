@@ -1,0 +1,28 @@
+{
+  "config": {
+    "flow_title": "{name} ({manufacturer})",
+    "step": {
+      "user": {
+        "title": "HomeKit Wi-Fi Provisioning",
+        "description": "Optionally set the network accessories should join. Leave empty to let each ESPHome radio use its own Wi-Fi. Required for the host's own Wi-Fi radio.",
+        "data": {
+          "target_ssid": "Network name (SSID)",
+          "target_psk": "Network password"
+        }
+      },
+      "confirm": {
+        "title": "Put {name} on Wi-Fi?",
+        "description": "{manufacturer} {model} ({wac_id}) is waiting for Wi-Fi. The nearest radio will send it your network's credentials. Afterwards, pair it from the HomeKit Device card."
+      }
+    },
+    "progress": {
+      "provisioning": "Sending Wi-Fi credentials via {radio} and waiting for the accessory to join the network. This can take up to two minutes."
+    },
+    "abort": {
+      "single_instance_allowed": "Already set up. Unconfigured accessories appear as discovered devices.",
+      "already_configured": "This accessory is ignored or already handled.",
+      "wifi_provisioned": "{name} is on Wi-Fi. Serial: {serial}. Model: {model}. Firmware: {firmware}. Pair it from the HomeKit Device discovery card.",
+      "provision_failed": "Could not put {name} on Wi-Fi: {error}\n\n{log_tail}"
+    }
+  }
+}
