@@ -6,14 +6,18 @@
 - [x] `aiowac`: TLV8, beacon parsing, auth-setup, `/config`, `/configured`, CLI. Tested
       against a fake accessory.
 - [ ] Cross-check `aiowac` against the Go reference client (BertoldVdb/WACResearch) once.
-- [ ] ESPHome `wac_provisioner`: passive scan + `esphome.wac_found` events.
-- [ ] ESPHome `wac_provisioner`: provisioning state machine, log cache, guards.
-- [~] HA `wac_provision`: hub entry, radio registry, discovery cards, provisioning flow
+- [~] ESPHome `wac_provisioner`: passive scan + `esphome.wac_found` events. Written;
+      compiled only in CI; not run on hardware.
+- [~] ESPHome `wac_provisioner`: provisioning state machine, log cache, guards. Same.
+- [x] HA `wac_provision`: hub entry, radio registry, discovery cards, provisioning flow
       ending in `abort("wifi_provisioned")` with the `/config` response shown and saved.
-      Written and import-checked; needs flow tests (pytest-homeassistant-custom-component).
-- [ ] ESPHome `wac_protocol.cpp`: implement against aiowac's behaviour, host-built tests.
-- [ ] HA host backend: NetworkManager + wpa_supplicant D-Bus radio on a spare interface.
-- [ ] HACS release.
+      Flow tests with pytest-homeassistant-custom-component.
+- [x] ESPHome `wac_protocol.cpp` and `wac_http.cpp`, host-built and tested against the fake
+      accessory.
+- [~] HA host backend: `HostRadio` logic and tests done; the NetworkManager +
+      wpa_supplicant D-Bus `WifiControl` and its registration are not.
+- [x] CI, versioning (`scripts/version.py`) and the release workflow (PyPI + HACS zip).
+- [ ] First release.
 
 ## v2
 

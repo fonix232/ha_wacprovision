@@ -5,9 +5,11 @@ configurator in Apple's Wireless Accessory Configuration (WAC) protocol, the ste
 app normally does. Once the accessory is on your network, Home Assistant's built-in
 **HomeKit Device** integration discovers it and you pair it there as usual.
 
-> **Status: early v1, not usable yet.** The `aiowac` library and CLI work against a test
-> accessory; the ESPHome provisioning state machine and the host Wi-Fi radio are not
-> implemented. It is not yet known whether current HomeKit firmware accepts this exchange.
+> **Status: v1, untested on real accessories.** The `aiowac` library, the CLI and the
+> ESPHome component's protocol code are tested against a fake accessory, and the HA flow has
+> tests. The ESPHome provisioning firmware has not run on hardware yet, and the host's own
+> Wi-Fi radio is not wired up. It is not yet known whether current HomeKit firmware accepts
+> this exchange.
 
 ## How it works
 
@@ -97,6 +99,12 @@ api:
 
 In Home Assistant, enable **Allow the device to perform Home Assistant actions** for the
 node, or the events never arrive.
+
+## Releases
+
+Releases are cut from the **Release** workflow (Actions tab, choose patch, minor or major).
+It stamps one version into `aiowac` and the integration, tags it, publishes `aiowac` to PyPI
+and attaches `wac_provision.zip` to a GitHub release for HACS.
 
 ## Security
 

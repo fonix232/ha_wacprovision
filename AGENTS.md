@@ -15,11 +15,13 @@ python/aiowac/                 WAC configurator library + CLI (PyPI package `aio
 python/aiowac/src/aiowac/      library source: tlv, beacon, crypto, session, transport, cli
 python/aiowac/tests/           pytest, including a fake accessory server
 custom_components/wac_provision/  HA custom integration (HACS), domain `wac_provision`
-custom_components/wac_provision/backends/  radios: esphome.py (ESPHome nodes), host.py (stub)
+custom_components/wac_provision/backends/  radios: esphome.py (ESPHome nodes), host.py (logic only)
 components/wac_provisioner/    ESPHome external component (ESP32 only; uses IDF APIs)
-tests/ha/                      HA-side unit tests (no running HA needed)
-tests/esphome/                 ESPHome config/codegen test YAML
-hacs.json                      HACS manifest
+tests/ha/                      HA flow and backend tests (pytest-homeassistant-custom-component)
+tests/esphome/                 ESPHome test YAML, and a host build of the protocol code
+scripts/version.py             the one version, stamped into pyproject.toml and manifest.json
+.github/workflows/             ci.yml (every push and PR), release.yml (manual, publishes)
+hacs.json                      HACS manifest (zip release)
 .claude/agents/                Claude Code agents
 .agents/                       shared skills, plans; local/ is ignored
 ```
@@ -37,9 +39,11 @@ hacs.json                      HACS manifest
   auth-setup signature first, then encrypts the `/config` request, then decrypts its
   response. Never create a fresh cipher per message.
 - **An ESPHome node must always get back onto its normal Wi-Fi.** Every provisioning session
-  is bounded by per-step timeouts, an overall `esp_timer` deadline that runs separately
-  from the main loop, an `RTC_NOINIT` in-progress marker checked at boot, and ESPHome's own
-  `wifi.reboot_timeout`. Do not use any mechanism that suspends `reboot_timeout`.
+  is bounded by per-step timeouts, an `esp_timer` deadline that runs separately from the
+  main loop, a backstop `esp_timer` that calls `esp_restart()`, and an `RTC_NOINIT`
+  in-progress marker checked at boot. Handing the radio over uses `wifi.disable()`, which
+  pauses ESPHome's `reboot_timeout`; the backstop timer replaces it until `wifi.enable()`.
+  Never stop or extend the backstop while the wifi component is disabled.
 - **v1 creates no config entry, device or entity per accessory.** The flow ends in
   `abort("wifi_provisioned")`; HomeKit Device's own discovery takes over. The only entry is
   the integration's single hub entry.
@@ -68,15 +72,20 @@ cd python/aiowac && python -m pip install -e '.[test,cli]' && python -m pytest -
 python -m aiowac.cli decode-beacon <hex IE>
 python -m aiowac.cli provision --ssid TestSSID          # while joined to the accessory's soft-AP; prompts for the PSK
 
-# HA side, from the repo root, in a venv with `homeassistant`, `pytest` and `-e python/aiowac`:
+# HA side, from the repo root, with `pytest-homeassistant-custom-component` and `-e python/aiowac`:
 python -m pytest -q tests/ha
 
-# ESPHome side, in a venv with `esphome` (compiling needs the ESP-IDF toolchain):
-cd tests/esphome && esphome config test.esp32-idf.yaml && esphome compile --only-generate test.esp32-idf.yaml
+# ESPHome protocol code on the host (needs g++ and libmbedtls-dev), against the fake accessory:
+python -m pytest -q tests/esphome
+
+# ESPHome component (compiling needs the ESP-IDF toolchain from dl.espressif.com):
+cd tests/esphome && esphome config test.esp32-idf.yaml && esphome compile test.esp32-idf.yaml
+
+python3 scripts/version.py check
 ```
 
-The flow and backends are only import-checked against HA so far; there are no
-pytest-homeassistant-custom-component flow tests yet. The C++ has not been compiled.
+CI runs all of these. The firmware build only runs in CI when the sandbox cannot reach
+Espressif's servers; push a branch and check the `esphome` job before merging C++ changes.
 
 Real-device verification: factory-reset a HomeKit Wi-Fi accessory, join its open soft-AP
 from a Linux machine (`nmcli dev wifi connect "<accessory SSID>"`), run `provision`, rejoin
@@ -85,7 +94,9 @@ the normal network and check that `_hap._tcp` shows the accessory with `sf=1`.
 ## Conventions
 
 - One commit per finished, verified task. **No Co-Authored-By or other AI attribution
-  trailers.** Push only when asked.
+  trailers**, in commits, PRs or release notes. Push only when asked.
+- Versions are only changed by `scripts/version.py` (the release workflow runs it). aiowac
+  and the integration share one version; the manifest pins `aiowac==` that version.
 - `aiowac` tests live in `python/aiowac/tests/`; new protocol behaviour needs a test against
   the fake accessory in `python/aiowac/tests/fake_accessory.py`, which reimplements the
   crypto on purpose so client bugs cannot cancel out. HA tests live in `tests/ha/`.
