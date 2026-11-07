@@ -1,0 +1,8 @@
+# AI tooling: per-user runtime state only. .claude/skills is a link into .agents/ and
+# stays tracked, as do .claude/agents.
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/worktrees/
+
+# Local reviews, investigation evidence and scratch notes.
+/.agents/local/
