@@ -6,3 +6,10 @@
 
 # Local reviews, investigation evidence and scratch notes.
 /.agents/local/
+
+# Build and test output.
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv*/
+.esphome/
